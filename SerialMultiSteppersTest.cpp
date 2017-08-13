@@ -25,10 +25,10 @@ bool testInit() {
 
 int test_move()
 {
-	vector<MOVEDATATYPE> moveSteps{ 20,-1.2,-2.3 };
+	vector<MOVEDATATYPE> relativeDis{ 0, 47.1, 0 };
 
 	
-	vector<int> rtn_status = my_serialMultiSteppers.moveRelative(moveSteps);
+	vector<int> rtn_status = my_serialMultiSteppers.moveRelativeDis ( relativeDis );
 
 	if (rtn_status.empty()) {
 		cout << "Seems no moving status returned, continue the look" << endl;
@@ -45,25 +45,6 @@ int test_move()
 	return 0;
 }
 
-int test_homing()
-{
-
-
-
-	bool rtn_status = my_serialMultiSteppers.homing();
-
-	if (rtn_status) {
-		cout << "Seems homing ok" << endl;
-	}
-	else
-	{
-		cout << "Seems homing not ok" << endl;
-	}
-
-	cout << "good bye" << endl;
-
-	return 0;
-}
 
 
 int main(int argc, char **argv) {
@@ -72,7 +53,6 @@ int main(int argc, char **argv) {
 		testInit();
 
 		test_move();
-		test_homing();		
 	}
 	catch (exception &e) {
 		cerr << "Unhandled Exception: " << e.what() << endl;

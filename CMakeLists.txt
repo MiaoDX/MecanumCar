@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
-project(serial_SerialMultiSteppers)
+project(MecanumCar)
 
 if( WIN32 )
     include(C:/tools/cmake_install_libs/serial/share/serial/cmake/serialConfig.cmake)

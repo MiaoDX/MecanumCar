@@ -52,8 +52,7 @@ public:
 
 	
 	bool init(uint32_t baud=115200);	
-	bool homing();
-	std::vector<int> moveRelative(std::vector<MOVEDATATYPE> relativeSteps);
+	std::vector<int> moveRelativeDis ( std::vector<MOVEDATATYPE> relativeDis, long timeout=100 );
 
 private:
 	string get_device_port();

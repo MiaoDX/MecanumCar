@@ -1,0 +1,60 @@
+// MultipleSteppersDecorate.ino
+// -*- mode: C++ -*-
+// Use MultiStepperDecorate class to manage multiple steppers and make them all move to
+// different positions at predefined speed.
+
+
+
+
+#include "PinsAndConfigurationCar.h"
+#include "mecanum.h"
+
+// Up to 10 steppers can be handled as a group by MultiStepper
+MultiStepperDecorateNoLimit steppersDecorate;
+
+
+void setup() {
+	Serial.begin(9600);
+
+	// Then give them to MultiStepper to manage
+	steppersDecorate.addStepper(stepper1Decorate);
+	steppersDecorate.addStepper(stepper2Decorate);
+	steppersDecorate.addStepper(stepper3Decorate);
+	steppersDecorate.addStepper(stepper4Decorate);
+}
+
+unsigned long time = 0;
+void loop() {
+
+	time = micros ();
+    Serial.print ( "Before:" );
+    Serial.println ( time );
+
+	// pay attention to the different subdivision of the two steppers, first one with no subdivision, the second one have a subdivision of 32.
+
+	//- Set constSpeed
+    double constSpeed = 600.0;
+    double constSpeeds[4] = { constSpeed , constSpeed, constSpeed, constSpeed };
+    //steppersDecorate.setConstSpeeds ( constSpeeds );
+
+
+
+	Mecanum mecanumCar;
+	mecanumCar.x = 0;
+	mecanumCar.y = 47.1;
+	mecanumCar.z = 0;
+	Mecanum_Decompose(&mecanumCar);
+
+	double relativeDistance[4] = {mecanumCar.w1, mecanumCar.w2, mecanumCar.w3, mecanumCar.w4};
+	//long relative[2] = { -200 * 1 * 40L, 0 };
+	//steppersDecorate.moveRelativeStepsWithPredefinedAccelOrSpeed (relative);
+  steppersDecorate.moveRelativeDistancesWithPredefinedAccelOrSpeed (relativeDistance);
+
+
+	Serial.print ( "After:" );
+    Serial.println ( micros () );
+    Serial.print ( "Spent:" );
+    Serial.println ( micros () - time );
+	
+	delay(2000);
+}

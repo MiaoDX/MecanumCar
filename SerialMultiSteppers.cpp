@@ -1,7 +1,10 @@
 #include "SerialMultiSteppers.h"
 #include <regex>
+#include <chrono>
+#include <ctime>
 #include <thread>
 
+#define TIMEOUTSTR "TIMEOUTSTR"
 
 void my_sleep(unsigned long milliseconds) {
 	std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
@@ -65,12 +68,17 @@ vector<int> parse_move_rtnstr(string recv_str) {
 	return move_rtn_vecstr_to_vecint(rtn_s);
 }
 
-string block_send_cmd_and_recv_res_string(serial::Serial* my_serial, string cmd_str) {
+string block_send_cmd_and_recv_res_string ( serial::Serial* my_serial, string cmd_str, long timeout=100 )
+{
+
+
+	std::chrono::time_point<std::chrono::system_clock> start, end;
+	start = std::chrono::system_clock::now ();
 	
 	cout << "Going to send the command: " << cmd_str << endl;
 
-	my_serial->flush();
-	size_t write_byte = my_serial->write(cmd_str);
+	my_serial->flush ();
+	size_t write_byte = my_serial->write ( cmd_str );
 	cout << write_byte << ";Command write ok" << endl;
 
 	cout << "IDLE WAIT FOR DATA FROM THE ARDUINO" << endl;
@@ -82,29 +90,42 @@ string block_send_cmd_and_recv_res_string(serial::Serial* my_serial, string cmd_
 	* this is under assumption that the command return data is not messed up with other data
 	* For example "Other info, abcdef.. 3,1,-1,0;" won't show up.
 	*/
-	string recv_line;
-	do {		
-		recv_line == std::string();
-		size_t available_num = my_serial->available();
-		if (available_num == 0) {
+	string recv_line = std::string ();
+	do {
+		recv_line == std::string ();
+
+		end = std::chrono::system_clock::now ();
+		std::chrono::duration<double> elapsed_seconds = end - start;
+		if ( elapsed_seconds.count () > timeout ) {
+			cout << "RECV timeout !!!";
+			recv_line = TIMEOUTSTR;
+			break;
+		}
+
+
+
+		
+		size_t available_num = my_serial->available ();
+		if ( available_num == 0 ) {
 			cout << "seems no data available, going to wait two seconds" << endl;
 			//serial::Timeout::simpleTimeout(2000); // Seems that this can not be called like this.
-			my_sleep(2 * 1000);
+			my_sleep ( 2 * 1000 );
 			continue;
 		}
-		
-		cout << "All available char number: " << available_num  << endl;
 
-		recv_line = my_serial->readline();
+		cout << "All available char number: " << available_num << endl;
 
-		cout << recv_line.length() << ", String line read: " << recv_line << endl;
+		recv_line = my_serial->readline ();
 
-	} while (check_for_ack(recv_line) == false); // NOTE that, we only get the first response !!!!!!!!!!!!!!!
-	
+		cout << recv_line.length () << ", String line read: " << recv_line << endl;
 
-	my_serial->flush();
+	} while ( check_for_ack ( recv_line ) == false ); // NOTE that, we only get the first response !!!!!!!!!!!!!!!
+
+
+	my_serial->flush ();
 	return recv_line;
 }
+
 
 
 string SerialMultiSteppers::SerialMultiSteppers::get_device_port()
@@ -154,31 +175,24 @@ bool SerialMultiSteppers::SerialMultiSteppers::init(uint32_t baud)
 	return heartBeat();
 }
 
-bool SerialMultiSteppers::SerialMultiSteppers::homing()
-{
-	string cmd_str = assemble_no_para_cmd_str(CMDTYPE::HOMING);
-	string recv_str = block_send_cmd_and_recv_res_string(my_serial, cmd_str);
 
-	if (recv_str.substr(0, 1) == to_string(CMDTYPE::HOMING)) {
-		return true;
-	}
-
-	return false;
-}
-
-std::vector<int> SerialMultiSteppers::SerialMultiSteppers::moveRelative(std::vector<MOVEDATATYPE> relativeSteps)
+std::vector<int> SerialMultiSteppers::SerialMultiSteppers::moveRelativeDis ( std::vector<MOVEDATATYPE> relativeDis, long timeout)
 {
 
-	vector<int> rtn(3, 0);
+	vector<int> rtn ( 3, -1 );
 
-	string cmd_str = assemble_move_cmd_str(CMDTYPE::Movement, relativeSteps);
+	string cmd_str = assemble_move_cmd_str ( CMDTYPE::Movement, relativeDis );
 
-	string recv_str = block_send_cmd_and_recv_res_string(my_serial, cmd_str);
+	string recv_str = block_send_cmd_and_recv_res_string ( my_serial, cmd_str, timeout );
 
-	if (recv_str.substr(0, 1) == to_string(CMDTYPE::MovementResult)) {
-		rtn = parse_move_rtnstr(recv_str);
+
+
+	if ( recv_str == TIMEOUTSTR )
+		return rtn;
+
+	if ( recv_str.substr ( 0, 1 ) == to_string ( CMDTYPE::MovementResult ) ) {
+		rtn = parse_move_rtnstr ( recv_str );		
 	}
-
 	return rtn;
 }
 

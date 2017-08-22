@@ -66,6 +66,10 @@ int run ( int argc, char **argv )
 	if ( my_serialMultiSteppers.init () ) {
 		cout << "Seems all init job is ok, let's begin our type and run program" << endl;
 	}
+	else
+	{
+        return -1;
+	}
 
 	type_and_run ( my_serialMultiSteppers ); // loop here
 

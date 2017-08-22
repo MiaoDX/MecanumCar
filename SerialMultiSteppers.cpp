@@ -139,7 +139,12 @@ string SerialMultiSteppers::SerialMultiSteppers::get_device_port()
 
 	if (devices_found.size() > 1) {
 		cout << "Seems that there are more than one suitable available devices" << endl; // !!!!!!!!! EXCEPTION
-		return std::string(); // this is empty string
+        cout << "Please specify one if possible:" << endl;
+
+        string port;
+        cin >> port;
+
+        return port;
 	}
 
 	if (devices_found.size() < 1) {
@@ -157,7 +162,8 @@ bool SerialMultiSteppers::SerialMultiSteppers::init(uint32_t baud)
 	string port = get_device_port();
 
 	if (port.empty()) {
-		cout << "seems no available port" << endl;
+		cout << "seems no available port, just stop" << endl;
+
 		return false;
 	}
 
